@@ -73,7 +73,13 @@ docker-compose logs -f app
 .\scripts\run_streamlit.ps1
 ```
 
-### Option 4: Individual Services
+### Option 4: Demo Mode
+```powershell
+# Run demo with sample data
+.\scripts\demo.ps1
+```
+
+### Option 5: Individual Services
 ```bash
 # Database only
 docker-compose up -d db
@@ -151,15 +157,33 @@ solar-impact-insights/
 │       └── repository.py # Repositories
 ├── adapters/             # Adapters
 │   └── data_adapter.py   # Data integration
+├── data/                 # Data files
+│   └── real_solar_data.csv # Solar event dataset
 ├── sql/                  # SQL scripts
 │   └── init.sql          # Database initialization
 ├── scripts/              # Utility scripts
 │   ├── start.ps1         # Start services
-│   └── stop.ps1          # Stop services
+│   ├── stop.ps1          # Stop services
+│   ├── run_streamlit.ps1 # Run Streamlit locally
+│   ├── populate_database.py # Database population
+│   ├── collect_real_data.py # Real data collection
+│   └── demo.ps1          # Demo script
+├── static/               # Static web assets
+│   ├── dashboard.css     # Dashboard styles
+│   └── dashboard.js      # Dashboard JavaScript
+├── templates/            # HTML templates
+│   └── dashboard.html    # Main dashboard template
+├── grafana/              # Grafana configuration
+│   └── dashboard.json    # Grafana dashboard config
+├── logs/                 # Application logs
+├── streamlit_app.py      # Streamlit application
+├── demo_api.py          # API demonstration script
 ├── docker-compose.yml    # Docker orchestration
 ├── Dockerfile           # Application image
 ├── requirements.txt     # Python dependencies
-└── .env                # Environment variables
+├── .env                 # Environment variables
+├── .gitignore           # Git ignore rules
+└── README.md            # Project documentation
 ```
 
 ## 🔧 Development
@@ -177,6 +201,21 @@ docker-compose up -d db
 
 # Run local application
 python app/main.py
+
+# Run Streamlit locally
+python streamlit_app.py
+```
+
+### Data Management
+```powershell
+# Populate database with sample data
+python scripts/populate_database.py
+
+# Collect real solar data
+python scripts/collect_real_data.py
+
+# Quick data collection
+python scripts/quick_collect.py
 ```
 
 ### Debugging
