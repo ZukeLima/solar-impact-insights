@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: previsao_solar_db
+    environment:
+      POSTGRES_DB: previsao_solar
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - previsao_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  app:
+    build: .
+    container_name: previsao_solar_app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres123@db:5432/previsao_solar
+      - PYTHONPATH=/app
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - previsao_network
+    restart: unless-stopped
+
+  streamlit:
+    build: .
+    container_name: previsao_solar_streamlit
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres123@db:5432/previsao_solar
+      - PYTHONPATH=/app
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8501:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - previsao_network
+    restart: unless-stopped
+    command: streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: previsao_solar_grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - previsao_network
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: previsao_solar_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@previsao.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - previsao_network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+networks:
+  previsao_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  grafana_data:

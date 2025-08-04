@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌞 Solar Monitoring Dashboard</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <h1>🌞 Solar Event Prediction Dashboard</h1>
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="overview">Overview</button>
+            <button class="nav-tab" data-tab="analysis">Analysis</button>
+            <button class="nav-tab" data-tab="predictions">Predictions</button>
+            <button class="nav-tab" data-tab="alerts">Alerts</button>
+            <button class="nav-tab" data-tab="data">Data Explorer</button>
+        </nav>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <!-- Controls Panel -->
+            <section class="controls-panel">
+                <h3>🎛️ Dashboard Controls</h3>
+                <div class="controls-grid">
+                    <div class="form-group">
+                        <label>Quick Actions</label>
+                        <div>
+                            <button id="collectDataBtn" class="btn btn-primary">📊 Collect Data</button>
+                            <button id="analyzeBtn" class="btn btn-secondary">🔍 Run Analysis</button>
+                            <button id="predictBtn" class="btn btn-success">🔮 Generate Predictions</button>
+                            <button id="refreshBtn" class="btn btn-warning">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="startDate">Start Date</label>
+                        <input type="date" id="startDate" name="startDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">End Date</label>
+                        <input type="date" id="endDate" name="endDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Filter & Settings</label>
+                        <div>
+                            <button id="applyFilterBtn" class="btn btn-info">Apply Date Filter</button>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                                <input type="checkbox" id="realTimeToggle" checked>
+                                Real-time Updates
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="real-time-indicator">
+                    <div class="real-time-dot"></div>
+                    <span>Live Data - Last Update: <span id="lastUpdate">--:--:--</span></span>
+                </div>
+            </section>
+
+            <!-- Statistics Grid -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalEvents">0</div>
+                    <div class="stat-label">Total Events Recorded</div>
+                    <div class="stat-trend trend-up">
+                        <span>↗️</span> +12% from last week
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgIntensity">0.0</div>
+                    <div class="stat-label">Average SEP Intensity</div>
+                    <div class="stat-trend trend-down">
+                        <span>↘️</span> -3% from last week
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeAlerts">0</div>
+                    <div class="stat-label">Active Alerts</div>
+                    <div class="stat-trend trend-up">
+                        <span>⚠️</span> 2 new alerts
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="highIntensityEvents">0</div>
+                    <div class="stat-label">High Intensity Events</div>
+                    <div class="stat-trend trend-up">
+                        <span>🔥</span> +1 this week
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Charts -->
+            <section class="charts-grid">
+                <div class="chart-card">
+                    <h3>📈 SEP Intensity Timeline</h3>
+                    <div style="height: 300px;">
+                        <canvas id="intensityChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>🎯 Variable Correlations</h3>
+                    <div style="height: 300px;">
+                        <canvas id="correlationChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Alerts -->
+            <section class="alerts-section">
+                <h3>🚨 Recent Alerts</h3>
+                <div id="alertsList">
+                    <div class="alert-item alert-high">
+                        <div class="alert-icon">⚠️</div>
+                        <div class="alert-content">
+                            <div class="alert-message">High SEP intensity detected</div>
+                            <div class="alert-time">2 minutes ago</div>
+                        </div>
+                        <div class="alert-value">8.5</div>
+                    </div>
+                    <div class="alert-item alert-medium">
+                        <div class="alert-icon">🟡</div>
+                        <div class="alert-content">
+                            <div class="alert-message">Temperature anomaly detected</div>
+                            <div class="alert-time">15 minutes ago</div>
+                        </div>
+                        <div class="alert-value">2.3</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Analysis Tab -->
+        <div id="analysis" class="tab-content">
+            <h2>📊 Advanced Analysis</h2>
+            
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>🔮 Cluster Analysis</h3>
+                    <div style="height: 400px;">
+                        <canvas id="clusterChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>📊 Distribution Analysis</h3>
+                    <div style="height: 400px;">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>📋 Statistical Summary</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Mean</th>
+                            <th>Std Dev</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                            <th>Correlation with SEP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTableBody">
+                        <tr>
+                            <td>SEP Intensity</td>
+                            <td>3.42</td>
+                            <td>2.18</td>
+                            <td>0.1</td>
+                            <td>12.5</td>
+                            <td>1.00</td>
+                        </tr>
+                        <tr>
+                            <td>Temperature</td>
+                            <td>-0.15</td>
+                            <td>0.92</td>
+                            <td>-2.8</td>
+                            <td>1.9</td>
+                            <td>0.65</td>
+                        </tr>
+                        <tr>
+                            <td>Ice Extent</td>
+                            <td>14.8</td>
+                            <td>1.24</td>
+                            <td>11.2</td>
+                            <td>17.9</td>
+                            <td>-0.45</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Predictions Tab -->
+        <div id="predictions" class="tab-content">
+            <h2>🔮 Prediction Models</h2>
+            
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📈 Forecast Timeline</h3>
+                    <div style="height: 400px;">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+                <div class="prediction-card">
+                    <h3>🎯 Next 7 Days Forecast</h3>
+                    <div class="prediction-value">High Risk: 78%</div>
+                    <div class="stat-label">Probability of SEP events > 5.0</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 78%;"></div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <div class="prediction-value" style="font-size: 1.5rem;">6.2 ± 1.8</div>
+                        <div class="stat-label">Predicted Peak Intensity</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>📅 Daily Predictions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Predicted Intensity</th>
+                            <th>Confidence</th>
+                            <th>Risk Level</th>
+                            <th>Recommended Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="predictionsTableBody">
+                        <tr>
+                            <td>2025-08-05</td>
+                            <td>6.2</td>
+                            <td>85%</td>
+                            <td><span style="color: #dc3545;">High</span></td>
+                            <td>Monitor closely</td>
+                        </tr>
+                        <tr>
+                            <td>2025-08-06</td>
+                            <td>3.8</td>
+                            <td>72%</td>
+                            <td><span style="color: #ffc107;">Medium</span></td>
+                            <td>Standard monitoring</td>
+                        </tr>
+                        <tr>
+                            <td>2025-08-07</td>
+                            <td>2.1</td>
+                            <td>68%</td>
+                            <td><span style="color: #28a745;">Low</span></td>
+                            <td>Routine check</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Alerts Tab -->
+        <div id="alerts" class="tab-content">
+            <h2>🚨 Alert Management</h2>
+            
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📊 Alert Distribution</h3>
+                    <div style="height: 300px;">
+                        <canvas id="alertChart"></canvas>
+                    </div>
+                </div>
+                <div class="stat-card" style="height: fit-content;">
+                    <div class="stat-value">24h</div>
+                    <div class="stat-label">Alert Response Time</div>
+                    <div class="stat-trend trend-down">
+                        <span>⚡</span> 50% faster than target
+                    </div>
+                </div>
+            </div>
+
+            <div class="alerts-section">
+                <h3>📋 Alert History</h3>
+                <div class="controls-grid" style="margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label for="alertFilter">Filter by Severity</label>
+                        <select id="alertFilter">
+                            <option value="all">All Alerts</option>
+                            <option value="high">High Priority</option>
+                            <option value="medium">Medium Priority</option>
+                            <option value="low">Low Priority</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Alert Actions</label>
+                        <div>
+                            <button class="btn btn-danger">🔕 Silence All</button>
+                            <button class="btn btn-success">✅ Mark All Read</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="alertsHistoryList">
+                    <!-- Alerts will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Explorer Tab -->
+        <div id="data" class="tab-content">
+            <h2>🗃️ Data Explorer</h2>
+            
+            <div class="controls-panel">
+                <h3>🔍 Data Query Interface</h3>
+                <div class="controls-grid">
+                    <div class="form-group">
+                        <label for="queryType">Query Type</label>
+                        <select id="queryType">
+                            <option value="recent">Recent Events</option>
+                            <option value="high-intensity">High Intensity</option>
+                            <option value="date-range">Date Range</option>
+                            <option value="cluster">By Cluster</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="limitRecords">Limit Records</label>
+                        <select id="limitRecords">
+                            <option value="100">100</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Export Options</label>
+                        <div>
+                            <button class="btn btn-info">📥 Export CSV</button>
+                            <button class="btn btn-info">📊 Export JSON</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>📊 Event Data</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>SEP Intensity</th>
+                            <th>Temperature</th>
+                            <th>Ice Extent</th>
+                            <th>Ozone Level</th>
+                            <th>KP Index</th>
+                            <th>Cluster</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>

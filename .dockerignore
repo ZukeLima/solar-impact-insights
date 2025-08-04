@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+docs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Node modules (if any)
+node_modules/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Scripts
+scripts/
+
+# Environment
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Data files (not needed in container)
+*.csv
+*.json
+data/
+
+# Jupyter notebooks
+*.ipynb
+
+# Coverage reports
+htmlcov/
+.coverage
+.pytest_cache/

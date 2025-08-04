@@ -1,0 +1,134 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "🌞 Solar Event Monitoring",
+    "tags": ["solar", "events", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "SEP Intensity Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sep_intensity",
+            "legendFormat": "SEP Intensity",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Intensity",
+            "min": 0
+          }
+        ],
+        "xAxis": {
+          "show": true
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Alert Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "count by (severity) (alerts)",
+            "legendFormat": "{{severity}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "High Intensity Events",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(sep_intensity > 5)",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Average Intensity",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg(sep_intensity)",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Temperature Correlation",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "temperature",
+            "legendFormat": "Temperature",
+            "refId": "A"
+          },
+          {
+            "expr": "sep_intensity",
+            "legendFormat": "SEP Intensity",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      }
+    ],
+    "time": {
+      "from": "now-7d",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "High Intensity Events",
+          "enable": true,
+          "iconColor": "red",
+          "query": "sep_intensity > 5"
+        }
+      ]
+    },
+    "refresh": "5s",
+    "schemaVersion": 16,
+    "version": 0
+  }
+}
