@@ -1,262 +1,262 @@
-# 🌞 Sistema de Previsão Solar
+# 🌞 Solar Impact Insights
 
-Sistema completo para análise e previsão de eventos de partículas energéticas solares (SEP) usando Docker, PostgreSQL e FastAPI.
+Complete system for analysis and prediction of Solar Energetic Particle (SEP) events using Docker, PostgreSQL, and FastAPI.
 
-## 🚀 Funcionalidades
+## 🚀 Features
 
-### 📊 **Múltiplos Dashboards**
-- **Dashboard Web Principal**: Interface moderna com gráficos interativos
-- **Streamlit Analytics**: Análises avançadas e exploração de dados
-- **Grafana Monitoring**: Monitoramento em tempo real com alertas
+### 📊 **Multiple Dashboards**
+- **Main Web Dashboard**: Modern interface with interactive charts
+- **Streamlit Analytics**: Advanced analysis and data exploration
+- **Grafana Monitoring**: Real-time monitoring with alerts
 
-### 🔬 **Análises Avançadas**
-- **Coleta de Dados**: Integração com APIs de dados solares e atmosféricos
-- **Análise de Correlações**: Análise estatística entre diferentes variáveis
-- **Clustering**: Agrupamento de eventos similares com visualizações 3D
-- **Detecção de Anomalias**: Identificação automática de eventos anômalos
-- **Previsões**: Modelos de machine learning para previsão de eventos
+### 🔬 **Advanced Analytics**
+- **Data Collection**: Integration with solar and atmospheric data APIs
+- **Correlation Analysis**: Statistical analysis between different variables
+- **Clustering**: Grouping of similar events with 3D visualizations
+- **Anomaly Detection**: Automatic identification of anomalous events
+- **Predictions**: Machine learning models for event prediction
 
-### 🚨 **Sistema de Alertas**
-- **Alertas em Tempo Real**: Notificações para eventos de alta intensidade
-- **Classificação por Severidade**: High, Medium, Low
-- **Dashboard de Alertas**: Interface dedicada para gerenciamento
+### 🚨 **Alert System**
+- **Real-time Alerts**: Notifications for high-intensity events
+- **Severity Classification**: High, Medium, Low
+- **Alert Dashboard**: Dedicated interface for management
 
-### 🛠️ **Tecnologias de Interface**
-- **API REST**: Interface completa para interação com o sistema
-- **WebSockets**: Atualizações em tempo real (planned)
-- **Banco de Dados**: Armazenamento persistente com PostgreSQL
+### 🛠️ **Interface Technologies**
+- **REST API**: Complete interface for system interaction
+- **WebSockets**: Real-time updates (planned)
+- **Database**: Persistent storage with PostgreSQL
 
-## 🛠️ Tecnologias
+## 🛠️ Technologies
 
 - **Python 3.11**
-- **FastAPI** - Framework web moderno
-- **PostgreSQL** - Banco de dados relacional
-- **SQLAlchemy** - ORM para Python
-- **Docker & Docker Compose** - Containerização
-- **Pandas & NumPy** - Análise de dados
+- **FastAPI** - Modern web framework
+- **PostgreSQL** - Relational database
+- **SQLAlchemy** - Python ORM
+- **Docker & Docker Compose** - Containerization
+- **Pandas & NumPy** - Data analysis
 - **Scikit-learn** - Machine Learning
-- **Matplotlib & Seaborn** - Visualização
-- **PgAdmin** - Interface de administração do banco
+- **Matplotlib & Seaborn** - Visualization
+- **PgAdmin** - Database administration interface
 
-## 📋 Pré-requisitos
+## 📋 Prerequisites
 
 - Docker Desktop
 - Docker Compose
 - PowerShell (Windows)
 
-## 🏃‍♂️ Como Executar
+## 🏃‍♂️ How to Run
 
-### Opção 1: Script PowerShell (Recomendado)
+### Option 1: PowerShell Script (Recommended)
 ```powershell
-# Iniciar todos os serviços
+# Start all services
 .\scripts\start.ps1
 
-# Parar todos os serviços
+# Stop all services
 .\scripts\stop.ps1
 ```
 
-### Opção 2: Docker Compose Manual
+### Option 2: Manual Docker Compose
 ```bash
-# Iniciar serviços
+# Start services
 docker-compose up --build -d
 
-# Parar serviços
+# Stop services
 docker-compose down
 
-# Ver logs
+# View logs
 docker-compose logs -f app
 ```
 
-### Opção 3: Streamlit Local
+### Option 3: Local Streamlit
 ```powershell
-# Executar apenas o Streamlit localmente
+# Run only Streamlit locally
 .\scripts\run_streamlit.ps1
 ```
 
-### Opção 4: Serviços Individuais
+### Option 4: Individual Services
 ```bash
-# Apenas banco de dados
+# Database only
 docker-compose up -d db
 
-# FastAPI + Banco
+# FastAPI + Database
 docker-compose up -d db app
 
-# Todos exceto Grafana
+# All except Grafana
 docker-compose up -d db app streamlit pgadmin
 ```
 
-## 🌐 Acessos
+## 🌐 Access Points
 
-Após iniciar os serviços:
+After starting the services:
 
-- **🎛️ Dashboard Principal**: http://localhost:8000/dashboard
+- **🎛️ Main Dashboard**: http://localhost:8000/dashboard
 - **📊 Streamlit Analytics**: http://localhost:8501
 - **📈 Grafana Monitoring**: http://localhost:3000
-  - Usuário: `admin`
-  - Senha: `admin123`
-- **📖 API Documentação**: http://localhost:8000/docs
+  - User: `admin`
+  - Password: `admin123`
+- **📖 API Documentation**: http://localhost:8000/docs
 - **📋 API Redoc**: http://localhost:8000/redoc
 - **🗄️ PgAdmin**: http://localhost:5050
   - Email: `admin@previsao.com`
-  - Senha: `admin123`
+  - Password: `admin123`
 
-## 🗄️ Banco de Dados
+## 🗄️ Database
 
-### Conexão PostgreSQL
+### PostgreSQL Connection
 - **Host**: localhost
-- **Porta**: 5432
-- **Banco**: previsao_solar
-- **Usuário**: postgres
-- **Senha**: postgres123
+- **Port**: 5432
+- **Database**: previsao_solar
+- **User**: postgres
+- **Password**: postgres123
 
-### Tabelas Principais
-- `sep_events` - Eventos de partículas energéticas solares
-- `predictions` - Previsões geradas pelos modelos
-- `alerts` - Alertas do sistema
-- `model_metrics` - Métricas de performance dos modelos
+### Main Tables
+- `sep_events` - Solar energetic particle events
+- `predictions` - Model-generated predictions
+- `alerts` - System alerts
+- `model_metrics` - Model performance metrics
 
 ## 📊 API Endpoints
 
-### Coleta de Dados
-- `POST /data/collect` - Coletar e armazenar dados
-- `GET /data/events` - Listar eventos armazenados
-- `GET /data/high-intensity` - Eventos de alta intensidade
+### Data Collection
+- `POST /data/collect` - Collect and store data
+- `GET /data/events` - List stored events
+- `GET /data/high-intensity` - High-intensity events
 
-### Análises
-- `POST /analysis/correlations` - Análise de correlações
-- `POST /analysis/clustering` - Clustering de eventos
-- `POST /analysis/prediction` - Gerar previsões
+### Analytics
+- `POST /analysis/correlations` - Correlation analysis
+- `POST /analysis/clustering` - Event clustering
+- `POST /analysis/prediction` - Generate predictions
 
-### Monitoramento
-- `GET /alerts` - Listar alertas ativos
-- `GET /health` - Status da aplicação
+### Monitoring
+- `GET /alerts` - List active alerts
+- `GET /health` - Application status
 
-## 🏗️ Estrutura do Projeto
+## 🏗️ Project Structure
 
 ```
-previsao_solar/
-├── app/                    # Aplicação principal
-│   ├── main.py            # Ponto de entrada
+solar-impact-insights/
+├── app/                    # Main application
+│   ├── main.py            # Entry point
 │   └── api.py             # FastAPI routes
-├── domain/                # Entidades de domínio
-│   └── entities.py        # Classes de dados
-├── use_cases/            # Casos de uso
-│   ├── analysis.py       # Análises estatísticas
-│   └── alerts.py         # Sistema de alertas
-├── infrastructure/       # Infraestrutura
-│   ├── data_collection.py # Coleta de dados
-│   ├── visualization.py   # Visualizações
-│   └── database/         # Configuração do banco
-│       ├── models.py     # Modelos SQLAlchemy
-│       └── repository.py # Repositórios
-├── adapters/             # Adaptadores
-│   └── data_adapter.py   # Integração de dados
-├── sql/                  # Scripts SQL
-│   └── init.sql          # Inicialização do banco
-├── scripts/              # Scripts utilitários
-│   ├── start.ps1         # Iniciar serviços
-│   └── stop.ps1          # Parar serviços
-├── docker-compose.yml    # Orquestração Docker
-├── Dockerfile           # Imagem da aplicação
-├── requirements.txt     # Dependências Python
-└── .env                # Variáveis de ambiente
+├── domain/                # Domain entities
+│   └── entities.py        # Data classes
+├── use_cases/            # Use cases
+│   ├── analysis.py       # Statistical analysis
+│   └── alerts.py         # Alert system
+├── infrastructure/       # Infrastructure
+│   ├── data_collection.py # Data collection
+│   ├── visualization.py   # Visualizations
+│   └── database/         # Database configuration
+│       ├── models.py     # SQLAlchemy models
+│       └── repository.py # Repositories
+├── adapters/             # Adapters
+│   └── data_adapter.py   # Data integration
+├── sql/                  # SQL scripts
+│   └── init.sql          # Database initialization
+├── scripts/              # Utility scripts
+│   ├── start.ps1         # Start services
+│   └── stop.ps1          # Stop services
+├── docker-compose.yml    # Docker orchestration
+├── Dockerfile           # Application image
+├── requirements.txt     # Python dependencies
+└── .env                # Environment variables
 ```
 
-## 🔧 Desenvolvimento
+## 🔧 Development
 
-### Ambiente Local
+### Local Environment
 ```bash
-# Instalar dependências
+# Install dependencies
 pip install -r requirements.txt
 
-# Configurar variáveis de ambiente
+# Configure environment variables
 cp .env.example .env
 
-# Executar apenas o banco
+# Run database only
 docker-compose up -d db
 
-# Executar aplicação local
+# Run local application
 python app/main.py
 ```
 
 ### Debugging
 ```bash
-# Ver logs da aplicação
+# View application logs
 docker-compose logs -f app
 
-# Ver logs do banco
+# View database logs
 docker-compose logs -f db
 
-# Acessar container da aplicação
+# Access application container
 docker-compose exec app bash
 
-# Acessar banco de dados
+# Access database
 docker-compose exec db psql -U postgres -d previsao_solar
 ```
 
-## 📈 Exemplo de Uso
+## 📈 Usage Example
 
-1. **Iniciar os serviços**:
+1. **Start the services**:
    ```powershell
    .\scripts\start.ps1
    ```
 
-2. **Acessar o dashboard**: http://localhost:8000/dashboard
+2. **Access the dashboard**: http://localhost:8000/dashboard
 
-3. **Coletar dados**:
-   - Clique em "Coletar Dados Mock"
+3. **Collect data**:
+   - Click "Collect Mock Data"
 
-4. **Executar análises**:
-   - "Análise de Correlações"
+4. **Run analyses**:
+   - "Correlation Analysis"
    - "Clustering"
-   - "Gerar Previsões"
+   - "Generate Predictions"
 
-5. **Monitorar**:
-   - "Ver Alertas"
-   - "Eventos de Alta Intensidade"
+5. **Monitor**:
+   - "View Alerts"
+   - "High-Intensity Events"
 
-## 🚨 Alertas e Monitoramento
+## 🚨 Alerts and Monitoring
 
-O sistema possui alertas automáticos para:
-- Eventos de alta intensidade (SEP > 5.0)
-- Anomalias detectadas nos dados
-- Previsões de eventos críticos
+The system has automatic alerts for:
+- High-intensity events (SEP > 5.0)
+- Data anomalies detected
+- Critical event predictions
 
 ## 📝 Logs
 
-Logs são armazenados em:
+Logs are stored in:
 - Container: `/app/logs/`
 - Local: `./logs/`
 
-## 🤝 Contribuição
+## 🤝 Contributing
 
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
+1. Fork the project
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-## 📄 Licença
+## 📄 License
 
-Este projeto está sob a licença MIT.
+This project is under the MIT license.
 
-## 🆘 Suporte
+## 🆘 Support
 
-Para problemas ou dúvidas:
-1. Verifique os logs: `docker-compose logs -f`
-2. Reinicie os serviços: `.\scripts\stop.ps1` e `.\scripts\start.ps1`
-3. Verifique se todas as portas estão disponíveis
+For issues or questions:
+1. Check logs: `docker-compose logs -f`
+2. Restart services: `.\scripts\stop.ps1` and `.\scripts\start.ps1`
+3. Verify all ports are available
 
-## 🔄 Atualizações
+## 🔄 Updates
 
-Para atualizar o sistema:
+To update the system:
 ```powershell
-# Parar serviços
+# Stop services
 .\scripts\stop.ps1
 
 # Rebuild
 docker-compose build --no-cache
 
-# Iniciar
+# Start
 .\scripts\start.ps1
 ```
