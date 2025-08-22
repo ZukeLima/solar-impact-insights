@@ -6,12 +6,15 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import sys
 import os
+from datetime import datetime, timedelta
+import json
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from infrastructure.database.repository import DatabaseRepository
 from infrastructure.database.models import get_db
+from infrastructure.data_reader import DataReader, read_solar_csv, get_data_info
 from use_cases.analysis import analisar_correlacoes, clusterizar_eventos, prever_eventos
 from infrastructure.data_collection import gerar_dados_mock
 
@@ -54,54 +57,149 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_data
-def load_data():
-    """Load data from database or generate mock data"""
+def load_data(data_source="database", file_path=None, filters=None):
+    """Enhanced data loading with multiple sources and filtering"""
+    data_reader = DataReader()
+    
     try:
-        repo = DatabaseRepository()
-        df = repo.get_sep_events_as_dataframe()
-        if df.empty:
-            # Generate mock data if database is empty
+        if data_source == "database":
+            # Try to load from database first
+            repo = DatabaseRepository()
+            df = repo.get_sep_events_as_dataframe()
+            if not df.empty:
+                st.success(f"✅ Loaded {len(df)} records from database")
+                return df
+            else:
+                st.warning("⚠️ Database is empty, trying CSV file...")
+                data_source = "csv"
+        
+        if data_source == "csv":
+            # Load from CSV file with enhanced reader
+            df = data_reader.read_solar_data(
+                file_path=file_path,
+                validate_data=True,
+                filter_params=filters
+            )
+            if not df.empty:
+                st.success(f"✅ Loaded {len(df)} records from CSV")
+                return df
+            else:
+                st.warning("⚠️ CSV file not found or empty, generating mock data...")
+                data_source = "mock"
+        
+        if data_source == "mock":
+            # Generate mock data as fallback
             sep, temp, ice, ozone, geomag = gerar_dados_mock()
             from adapters.data_adapter import integrar_dados
             df = integrar_dados(sep, temp, ice, ozone, geomag)
-        return df
+            st.info(f"ℹ️ Generated {len(df)} mock records")
+            return df
+            
     except Exception as e:
-        st.error(f"Error loading data: {e}")
-        # Fallback to mock data
-        sep, temp, ice, ozone, geomag = gerar_dados_mock()
-        from adapters.data_adapter import integrar_dados
-        return integrar_dados(sep, temp, ice, ozone, geomag)
+        st.error(f"❌ Error loading data: {e}")
+        # Final fallback to mock data
+        try:
+            sep, temp, ice, ozone, geomag = gerar_dados_mock()
+            from adapters.data_adapter import integrar_dados
+            df = integrar_dados(sep, temp, ice, ozone, geomag)
+            st.info("ℹ️ Using mock data as fallback")
+            return df
+        except Exception as fallback_error:
+            st.error(f"❌ Critical error: {fallback_error}")
+            return pd.DataFrame()
+
+@st.cache_data
+def get_data_summary(df):
+    """Get enhanced data summary"""
+    return get_data_info(df)
 
 def main():
     # Header
     st.markdown('<h1 class="main-header">🌞 Solar Event Analytics Dashboard</h1>', unsafe_allow_html=True)
     
-    # Sidebar
+    # Sidebar with Enhanced Data Controls
     with st.sidebar:
         st.header("🎛️ Dashboard Controls")
         
-        # Data refresh
-        if st.button("🔄 Refresh Data", type="primary"):
-            st.cache_data.clear()
-            st.rerun()
+        # Data Source Selection
+        st.subheader("📂 Data Source")
+        data_reader = DataReader()
+        available_files = data_reader.get_available_files()
+        
+        data_source = st.selectbox(
+            "Choose data source:",
+            options=["database", "csv", "mock"],
+            format_func=lambda x: {
+                "database": "🗄️ Database", 
+                "csv": "📄 CSV File", 
+                "mock": "🎲 Mock Data"
+            }[x]
+        )
+        
+        file_path = None
+        if data_source == "csv":
+            if available_files:
+                selected_file = st.selectbox("Select CSV file:", available_files)
+                file_path = f"data/{selected_file}"
+            else:
+                st.warning("⚠️ No CSV files found in data/ directory")
+                st.info("Available files will be shown here when found")
+        
+        # Enhanced Filtering
+        st.subheader("🔍 Data Filters")
         
         # Date range filter
-        st.subheader("📅 Date Range")
-        date_range = st.date_input(
-            "Select date range",
-            value=[],
-            key="date_range"
-        )
+        use_date_filter = st.checkbox("Filter by date range", value=False)
+        start_date, end_date = None, None
         
-        # Intensity threshold
-        st.subheader("⚡ Intensity Filter")
-        intensity_threshold = st.slider(
-            "Minimum SEP Intensity",
-            min_value=0.0,
-            max_value=20.0,
-            value=0.0,
-            step=0.1
-        )
+        if use_date_filter:
+            date_col1, date_col2 = st.columns(2)
+            with date_col1:
+                start_date = st.date_input("Start date", value=datetime.now() - timedelta(days=30))
+            with date_col2:
+                end_date = st.date_input("End date", value=datetime.now())
+        
+        # Intensity filters
+        use_intensity_filter = st.checkbox("Filter by intensity", value=False)
+        min_intensity, max_intensity = None, None
+        
+        if use_intensity_filter:
+            intensity_col1, intensity_col2 = st.columns(2)
+            with intensity_col1:
+                min_intensity = st.number_input("Min intensity", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
+            with intensity_col2:
+                max_intensity = st.number_input("Max intensity", min_value=0.0, max_value=20.0, value=20.0, step=0.1)
+        
+        # High intensity events only
+        high_intensity_only = st.checkbox("High intensity events only (>5.0)", value=False)
+        
+        # Build filters dictionary
+        filters = {}
+        if use_date_filter:
+            filters.update({"start_date": start_date, "end_date": end_date})
+        if use_intensity_filter:
+            filters.update({"min_intensity": min_intensity, "max_intensity": max_intensity})
+        if high_intensity_only:
+            filters["high_intensity_only"] = True
+        
+        # Data operations
+        st.subheader("⚙️ Data Operations")
+        
+        col_refresh, col_clear = st.columns(2)
+        with col_refresh:
+            refresh_data = st.button("🔄 Refresh", type="primary", use_container_width=True)
+        with col_clear:
+            clear_cache = st.button("🗑️ Clear Cache", use_container_width=True)
+        
+        if refresh_data:
+            st.cache_data.clear()
+            st.rerun()
+            
+        if clear_cache:
+            data_reader.clear_cache()
+            st.cache_data.clear()
+            st.success("Cache cleared!")
+            st.rerun()
         
         # Analysis options
         st.subheader("🔬 Analysis Options")
@@ -109,16 +207,28 @@ def main():
         show_correlations = st.checkbox("Show Correlations", value=True)
         show_predictions = st.checkbox("Show Predictions", value=True)
 
-    # Load data
+    # Load data with enhanced parameters
     with st.spinner("Loading solar event data..."):
-        df = load_data()
+        df = load_data(data_source=data_source, file_path=file_path, filters=filters)
     
-    # Apply filters
-    if len(date_range) == 2:
-        df = df[(df['date'] >= pd.Timestamp(date_range[0])) & 
-                (df['date'] <= pd.Timestamp(date_range[1]))]
+    if df.empty:
+        st.error("❌ No data available. Please check your data source.")
+        return
     
-    df_filtered = df[df['sep_intensity'] >= intensity_threshold]
+    # Get and display data summary
+    data_summary = get_data_summary(df)
+    
+    # Apply additional client-side filtering for legacy compatibility
+    df_filtered = df.copy()
+    
+    # Legacy date filtering (if filters weren't applied server-side)
+    if not filters and 'date_range' in st.session_state and len(st.session_state.date_range) == 2:
+        date_col = 'date' if 'date' in df.columns else 'datetime'
+        if date_col in df.columns:
+            df_filtered = df_filtered[
+                (df_filtered[date_col] >= pd.Timestamp(st.session_state.date_range[0])) & 
+                (df_filtered[date_col] <= pd.Timestamp(st.session_state.date_range[1]))
+            ]
     
     # Main metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -460,79 +570,229 @@ def main():
                 st.error(f"Error generating predictions: {e}")
 
     with tab5:
-        st.header("📊 Data Explorer")
+        st.header("📊 Enhanced Data Explorer")
         
-        # Data filtering options
+        # Data source information
+        st.subheader("📋 Data Source Information")
         col1, col2 = st.columns(2)
         
         with col1:
-            sort_by = st.selectbox(
-                "Sort by",
-                ['date', 'sep_intensity', 'temperature', 'kp_index']
-            )
+            st.info(f"**Source:** {data_source.upper()}")
+            if file_path:
+                st.info(f"**File:** {file_path}")
+            st.info(f"**Records:** {len(df_filtered):,}")
             
         with col2:
-            sort_order = st.radio("Sort order", ['Ascending', 'Descending'])
+            if data_summary.get("date_range"):
+                st.info(f"**Period:** {data_summary['date_range'].get('days_covered', 0)} days")
+                if data_summary['date_range'].get('start'):
+                    start_str = data_summary['date_range']['start'][:10]  # Get date part
+                    end_str = data_summary['date_range']['end'][:10]
+                    st.info(f"**Range:** {start_str} to {end_str}")
         
-        # Sort data
-        ascending = sort_order == 'Ascending'
-        df_sorted = df_filtered.sort_values(sort_by, ascending=ascending)
-        
-        # Display data
-        st.subheader(f"📋 Data Table ({len(df_sorted)} records)")
-        
-        # Data summary
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.write("**Date Range:**")
-            if not df_sorted.empty:
-                st.write(f"From: {df_sorted['date'].min().strftime('%Y-%m-%d')}")
-                st.write(f"To: {df_sorted['date'].max().strftime('%Y-%m-%d')}")
-        
-        with col2:
-            st.write("**Intensity Range:**")
-            if not df_sorted.empty:
-                st.write(f"Min: {df_sorted['sep_intensity'].min():.2f}")
-                st.write(f"Max: {df_sorted['sep_intensity'].max():.2f}")
-        
-        with col3:
-            if st.button("📥 Download CSV"):
-                csv = df_sorted.to_csv(index=False)
-                st.download_button(
-                    label="Download data as CSV",
-                    data=csv,
-                    file_name=f"solar_events_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
-                    mime="text/csv"
-                )
-        
-        # Display dataframe
-        st.dataframe(
-            df_sorted,
-            use_container_width=True,
-            height=400
-        )
-        
-        # Data quality metrics
-        st.subheader("📈 Data Quality")
+        # Enhanced filtering and operations
+        st.subheader("🔍 Advanced Data Operations")
         
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            completeness = (1 - df_sorted.isnull().sum().sum() / (len(df_sorted) * len(df_sorted.columns))) * 100
-            st.metric("Data Completeness", f"{completeness:.1f}%")
-        
+            sort_column = st.selectbox(
+                "Sort by:",
+                options=[col for col in df_filtered.columns if col != 'cluster'],
+                index=0 if 'datetime' not in df_filtered.columns else 
+                      list(df_filtered.columns).index('datetime') if 'datetime' in df_filtered.columns
+                      else 0
+            )
+            
         with col2:
-            duplicates = df_sorted.duplicated().sum()
-            st.metric("Duplicate Records", duplicates)
-        
+            sort_ascending = st.checkbox("Ascending", value=False)
+            
         with col3:
-            outliers = len(df_sorted[df_sorted['sep_intensity'] > df_sorted['sep_intensity'].quantile(0.99)])
-            st.metric("Potential Outliers", outliers)
-        
+            show_sample = st.checkbox("Show sample only", value=False)
+            if show_sample:
+                sample_size = st.slider("Sample size", 10, min(1000, len(df_filtered)), 100)
+                
         with col4:
-            data_points = len(df_sorted)
-            st.metric("Total Data Points", data_points)
+            search_term = st.text_input("Search in data:", placeholder="Enter search term...")
+        
+        # Apply advanced operations
+        display_df = df_filtered.copy()
+        
+        # Sorting
+        if sort_column in display_df.columns:
+            display_df = display_df.sort_values(sort_column, ascending=sort_ascending)
+        
+        # Sampling
+        if show_sample and len(display_df) > sample_size:
+            display_df = display_df.sample(n=sample_size).sort_index()
+            
+        # Searching
+        if search_term:
+            # Search in string columns
+            mask = pd.Series([False] * len(display_df))
+            for col in display_df.select_dtypes(include=['object']).columns:
+                mask |= display_df[col].astype(str).str.contains(search_term, case=False, na=False)
+            display_df = display_df[mask]
+        
+        # Data summary metrics
+        st.subheader("📊 Data Summary")
+        
+        col1, col2, col3, col4, col5 = st.columns(5)
+        
+        with col1:
+            st.metric("Total Records", f"{len(display_df):,}")
+            
+        with col2:
+            if 'sep_intensity' in display_df.columns:
+                avg_intensity = display_df['sep_intensity'].mean()
+                st.metric("Avg Intensity", f"{avg_intensity:.2f}")
+            
+        with col3:
+            if data_summary.get("data_quality"):
+                high_events = data_summary["data_quality"].get("high_intensity_events", 0)
+                st.metric("High Intensity", high_events)
+                
+        with col4:
+            missing_values = display_df.isnull().sum().sum()
+            st.metric("Missing Values", missing_values)
+            
+        with col5:
+            completeness = (1 - missing_values / (len(display_df) * len(display_df.columns))) * 100
+            st.metric("Completeness", f"{completeness:.1f}%")
+        
+        # Data quality analysis
+        if data_summary.get("missing_values"):
+            st.subheader("⚠️ Data Quality Issues")
+            missing_df = pd.DataFrame([
+                {"Column": col, "Missing Count": count, "Missing %": f"{(count/len(df_filtered)*100):.1f}%"}
+                for col, count in data_summary["missing_values"].items()
+            ])
+            st.dataframe(missing_df, hide_index=True)
+        
+        # Export functionality
+        st.subheader("📥 Data Export")
+        
+        export_col1, export_col2, export_col3 = st.columns(3)
+        
+        with export_col1:
+            export_format = st.selectbox("Export format:", ["csv", "json", "excel"])
+            
+        with export_col2:
+            filename_prefix = st.text_input("Filename prefix:", value="solar_data")
+            
+        with export_col3:
+            include_filters = st.checkbox("Include filter info", value=True)
+        
+        # Generate filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{filename_prefix}_{timestamp}.{export_format}"
+        
+        # Export buttons
+        export_col1, export_col2 = st.columns(2)
+        
+        with export_col1:
+            if st.button("📥 Export Current View", type="primary"):
+                try:
+                    if export_format == "csv":
+                        data = display_df.to_csv(index=False)
+                        mime_type = "text/csv"
+                    elif export_format == "json":
+                        data = display_df.to_json(orient='records', date_format='iso', indent=2)
+                        mime_type = "application/json"
+                    elif export_format == "excel":
+                        # For Excel, we need to use BytesIO
+                        import io
+                        buffer = io.BytesIO()
+                        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                            display_df.to_excel(writer, sheet_name='Solar Data', index=False)
+                        data = buffer.getvalue()
+                        mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    
+                    st.download_button(
+                        label=f"Download {filename}",
+                        data=data,
+                        file_name=filename,
+                        mime=mime_type
+                    )
+                    st.success(f"✅ Export ready: {filename}")
+                    
+                except Exception as e:
+                    st.error(f"❌ Export error: {e}")
+        
+        with export_col2:
+            if include_filters and st.button("📋 Export Filter Summary"):
+                filter_info = {
+                    "export_timestamp": datetime.now().isoformat(),
+                    "data_source": data_source,
+                    "file_path": file_path,
+                    "total_records": len(df_filtered),
+                    "filters_applied": filters or {},
+                    "data_summary": data_summary
+                }
+                
+                filter_json = json.dumps(filter_info, indent=2, default=str)
+                st.download_button(
+                    label="Download Filter Info",
+                    data=filter_json,
+                    file_name=f"filter_info_{timestamp}.json",
+                    mime="application/json"
+                )
+        
+        # Interactive data table
+        st.subheader("🗂️ Interactive Data Table")
+        
+        # Column selection
+        available_columns = list(display_df.columns)
+        selected_columns = st.multiselect(
+            "Select columns to display:",
+            available_columns,
+            default=available_columns[:min(6, len(available_columns))]  # Show first 6 columns by default
+        )
+        
+        if selected_columns:
+            display_table = display_df[selected_columns]
+        else:
+            display_table = display_df
+        
+        # Display the interactive dataframe
+        st.dataframe(
+            display_table,
+            use_container_width=True,
+            height=500,
+            column_config={
+                col: st.column_config.NumberColumn(
+                    format="%.3f"
+                ) for col in display_table.select_dtypes(include=['float64']).columns
+            }
+        )
+        
+        # Quick statistics
+        if not display_table.empty:
+            st.subheader("📈 Quick Statistics")
+            
+            # Select numeric column for statistics
+            numeric_columns = display_table.select_dtypes(include=[np.number]).columns.tolist()
+            if numeric_columns:
+                stats_column = st.selectbox("Choose column for detailed stats:", numeric_columns)
+                
+                if stats_column:
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write("**Basic Statistics:**")
+                        stats = display_table[stats_column].describe()
+                        for stat, value in stats.items():
+                            st.write(f"- **{stat.title()}:** {value:.3f}")
+                    
+                    with col2:
+                        st.write("**Distribution:**")
+                        fig_hist = px.histogram(
+                            display_table, 
+                            x=stats_column, 
+                            title=f"Distribution of {stats_column}",
+                            template="plotly_dark"
+                        )
+                        st.plotly_chart(fig_hist, use_container_width=True)
 
 if __name__ == "__main__":
     main()

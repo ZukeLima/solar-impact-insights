@@ -147,9 +147,37 @@ def main():
             mean_val = final_data[col].mean()
             print(f"  - {col}: μ={mean_val:.2f}")
     
+    # Validate data using enhanced reader
+    print("\n🔍 VALIDANDO DADOS COM ENHANCED READER...")
+    try:
+        import sys
+        import os
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from infrastructure.data_reader import get_data_info
+        
+        # Get detailed data summary
+        data_info = get_data_info(final_data.rename(columns={'datetime': 'datetime'}))
+        
+        print("📊 RESUMO DA VALIDAÇÃO:")
+        print(f"  - Records: {data_info['total_records']:,}")
+        if data_info.get('missing_values'):
+            print(f"  - Missing values detected: {len(data_info['missing_values'])} columns")
+        else:
+            print("  - ✅ No missing values detected")
+            
+        if data_info.get('data_quality'):
+            dq = data_info['data_quality']
+            print(f"  - High intensity events: {dq.get('high_intensity_events', 0)}")
+            print(f"  - Medium intensity events: {dq.get('medium_intensity_events', 0)}")
+            print(f"  - Low intensity events: {dq.get('low_intensity_events', 0)}")
+            
+    except Exception as e:
+        print(f"  - ⚠️ Validation warning: {e}")
+    
     print("\n🎯 PRÓXIMOS PASSOS:")
     print("1. Execute: python scripts/populate_database.py")
-    print("2. Acesse: http://localhost:8501")
+    print("2. Execute: python scripts/read_data.py --summary (para análise detalhada)")
+    print("3. Acesse: http://localhost:8501")
     
     return final_data
 
